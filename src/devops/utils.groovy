@@ -23,14 +23,11 @@ def remotePut (def remoteInfo, def fromPath, def toPath){
     sshPut remote: remoteInfo, from: fromPath, into: toPath
 }
 
-def sbt (args){
-    sh "${tool 'sbt-1.2.6'}/bin/sbt ${args}"
-}
 
 def buildDockerImage(String dockerRegistry, String dockerRegistryCreds, String buildImageName, String branchName = '', String args=''){
-    docker.withRegistry(dockerRegistry, Constants.DOCKER_REGISTRY_CREDS) {
-            def buildNode = docker.build("${buildImageName}:${branchName}.latest", Constants.DOCKER_BUILD_PARAMS + " ${args}")
-            buildNode.push()
+    docker.withRegistry(dockerRegistry, dockerRegistryCreds) {
+        def buildNode = docker.build("${buildImageName}:${branchName}.latest", Constants.DOCKER_BUILD_PARAMS + " ${args}")
+        buildNode.push()
     }
 }
 
@@ -61,46 +58,6 @@ def replaceTemplateVars(def templateName, def map){
     def engine = new groovy.text.GStringTemplateEngine()
     def template = engine.createTemplate(text).make(map)
     return template
-}
-
-def extendedChoiceParameterDefinitionObject (String name, String values, String defaultValue,
-              int visibleItemCnt=0, String description='', String delimiter=',') {
-
-    // default same as number of values
-    visibleItemCnt = visibleItemCnt ?: values.split(',').size()
-    return new ExtendedChoiceParameterDefinition(
-            name, //name,
-            "PT_CHECKBOX", //type
-            values, //value
-            "", //projectName
-            "", //propertyFile
-            "", //groovyScript
-            "", //groovyScriptFile
-            "", //bindings
-            "", //groovyClasspath
-            "", //propertyKey
-            defaultValue, //defaultValue
-            "", //defaultPropertyFile
-            "", //defaultGroovyScript
-            "", //defaultGroovyScriptFile
-            "", //defaultBindings
-            "", //defaultGroovyClasspath
-            "", //defaultPropertyKey
-            "", //descriptionPropertyValue
-            "", //descriptionPropertyFile
-            "", //descriptionGroovyScript
-            "", //descriptionGroovyScriptFile
-            "", //descriptionBindings
-            "", //descriptionGroovyClasspath
-            "", //descriptionPropertyKey
-            "", //javascriptFile
-            "", //javascript
-            false, //saveJSONParameterToFile
-            false, //quoteValue
-            visibleItemCnt, //visibleItemCount
-            description, //description
-            delimiter //multiSelectDelimiter
-            )
 }
 
 def buildDiscarderPropertyObject(String daysToKeepStr, String numToKeepStr, String artifactDaysToKeepStr='', String artifactNumToKeepStr=''){

@@ -11,5 +11,6 @@ class Constants {
     static final PIPELINE_FAILURE = 'FAILURE'
     static final PIPELINE_ABORTED = 'ABORTED'
 
-    static DOCKER_REGISTRY_CREDS_ID = 'mtuktarov-docker-hub'
+    static final DOCKER_REGISTRY_CREDS_ID = 'mtuktarov-docker-hub'
     static final DOCKER_BUILD_PARAMS = '-f Dockerfile . --no-cache'
+}

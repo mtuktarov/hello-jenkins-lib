@@ -3,31 +3,28 @@ package devops
 
 def getActions(){
     String actionsScript = """
-        return ['Build', 'Build and Deploy', 'Deploy']
+        return ['Run tests', 'Build image', 'Build and Deploy image', 'Deploy an image']
     """
     return actionsScript
 }
 
 def getImports(){
     return """
+        import com.cloudbees.plugins.credentials.Credentials
         import jenkins.model.Jenkins
         import groovy.json.JsonSlurper
-        import com.cloudbees.hudson.plugins.folder.properties.FolderCredentialsProvider.FolderCredentialsProperty
-        import com.cloudbees.hudson.plugins.folder.AbstractFolder
-        import com.cloudbees.hudson.plugins.folder.Folder
-        import com.cloudbees.plugins.credentials.impl.*
-        import com.cloudbees.plugins.credentials.*
-        import com.cloudbees.plugins.credentials.domains.*
+
         """
 }
 def getBranchesOrTags(String imageName, String dockerRegistryCreds, String repoUrl){
 
     String branchesOrTagsScript = """
         ${getImports()}
-        if (binding.variables.get('action') == 'Deploy') {
-            ${getTags(imageName, dockerRegistryCreds, false)}
-        } else {
+        if (binding.variables.get('action').contains('Build') || binding.variables.get('action').contains('Run')) {
             ${getBranches(repoUrl)}
+        }
+        else if (binding.variables.get('action').contains('Deploy')){
+            ${getTags(imageName, dockerRegistryCreds, false)}
         }
     """
     return branchesOrTagsScript
@@ -41,32 +38,35 @@ def getTags(String imageName, String dockerRegistryCreds, boolean withImports=tr
 
         credId = "${dockerRegistryCreds}"
 
-        def authString = ""
-        def credentialsStore =
-        Jenkins.instance.getAllItems(Folder.class)
-            .findAll{}
-            .each{
-                AbstractFolder<?> folderAbs = AbstractFolder.class.cast(it)
-                FolderCredentialsProperty property = folderAbs.getProperties().get(FolderCredentialsProperty.class)
-                if(property != null){
-                    for (cred in property.getCredentials()){
-                        if ( cred.id == credId ) {
-                            authString  = "\${cred.username}:\${cred.password}"
-                        }
-                    }
+        Set<Credentials> allCredentials = new HashSet<Credentials>();
+
+        def creds = com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials(
+              com.cloudbees.plugins.credentials.Credentials.class
+        );
+
+        allCredentials.addAll(creds)
+        def authString
+        if(allCredentials != null){
+            for (def cred in allCredentials){
+                if ( cred.id == credId ) {
+                    def token_response = ["curl", "-s", "-H", "Content-Type: application/json", "-d", "{\\"username\\": \\"\${cred.username}\\", \\"password\\": \\"\${cred.password}\\"}", "https://hub.docker.com/v2/users/login/"].execute().text.replaceAll("\\r\\n", "")
+                    def token_data = new groovy.json.JsonSlurperClassic().parseText(token_response)
+                  authToken = token_data.token
                 }
             }
+        }
 
-        def response = ["curl", "-u", "\${authString}", "-k", "-X", "GET", "https://hub.docker.com/v2/repositories/${imageName}/tags"].execute().text.replaceAll("\\r\\n", "")
-        def data = new groovy.json.JsonSlurperClassic().parseText(response)
+        def responseTags = ["curl", "-H", "Authorization: JWT \${authToken}", "-k", "-X", "GET", "https://hub.docker.com/v2/repositories/mtuktarov/hello/tags"].execute().text.replaceAll("\\r\\n", "")
+        def dataTags = new groovy.json.JsonSlurperClassic().parseText(responseTags)
+
 
         def tagsByDate = [:]
         def timestamps = []
         def sortedTags = []
 
-        data.each{
-            tagsByDate[it.created] = it.name
-            timestamps.push(it.created)
+        dataTags.results.each{
+            tagsByDate[it.last_updated] = it.name
+            timestamps.push(it.last_updated)
         }
 
         timestamps = timestamps.sort().reverse()
@@ -74,6 +74,7 @@ def getTags(String imageName, String dockerRegistryCreds, boolean withImports=tr
         for(timestamp in timestamps){
             sortedTags.push(tagsByDate[timestamp])
         }
+
         return sortedTags
     """
     return tagsScript
