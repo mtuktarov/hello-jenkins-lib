@@ -42,13 +42,13 @@ def checkout(String branch = 'master', String repoUrl, String repoCreds = ''){
     ])
 }
 
-def setGitHubBuildStatus(String githubRepo, String state, String commit) {
+def setGitHubBuildStatus(String githubRepo, String state='pending', String commit) {
     withCredentials([string(credentialsId: 'jenkins-personal-token', variable: 'token')]) {
         sh """
         curl -X POST "https://api.GitHub.com/repos/${githubRepo}/statuses/${commit}" \
         -H 'Content-Type: application/json' \
         -H 'Authorization:token ${token}' \
-        -d '{"state": "${state.toLowerCase()}", "context": "continuous-integration/jenkins", "description": "Jenkins build ${BUILD_NUMBER} completed", "target_url": "https://mtuktarov-empire.ru/job/${JOB_NAME}/${BUILD_NUMBER}/console"}'
+        -d '{"state": "${state.toLowerCase()}", "context": "continuous-integration/jenkins", "description": "Jenkins job \'${JOB_NAME}\', build \'${BUILD_NUMBER}\' completed", "target_url": "${BUILD_URL}/console"}'
         """
     }
 }
