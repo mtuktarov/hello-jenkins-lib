@@ -42,8 +42,8 @@ def checkout(String branch = 'master', String repoUrl, String repoCreds = ''){
     ])
 }
 
-def setGitHubBuildStatus(String githubRepo, String commit, String state='pending') {
-    withCredentials([string(credentialsId: 'jenkins-personal-token', variable: 'token')]) {
+def setGitHubBuildStatus(String githubRepo, String githubPersonalToken, String commit, String state='pending') {
+    withCredentials([string(credentialsId: githubPersonalToken, variable: 'token')]) {
         sh """
         curl -X POST "https://api.GitHub.com/repos/${githubRepo}/statuses/${commit}" \
         -H 'Content-Type: application/json' \
