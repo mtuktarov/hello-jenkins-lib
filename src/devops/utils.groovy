@@ -48,7 +48,7 @@ def setGitHubBuildStatus(String githubRepo, String commit, String state='pending
         curl -X POST "https://api.GitHub.com/repos/${githubRepo}/statuses/${commit}" \
         -H 'Content-Type: application/json' \
         -H 'Authorization:token ${token}' \
-        -d '{"state": "${state.toLowerCase()}", "context": "continuous-integration/jenkins", "description": "Jenkins job \'${JOB_NAME}\', build \'${BUILD_NUMBER}\' completed", "target_url": "${BUILD_URL}/console"}'
+        -d '{"state": "${state.toLowerCase()}", "context": "continuous-integration/jenkins", "description": "Jenkins job \'${JOB_NAME}\', build \'${BUILD_NUMBER}\'", "target_url": "${BUILD_URL}/console"}'
         """
     }
 }
