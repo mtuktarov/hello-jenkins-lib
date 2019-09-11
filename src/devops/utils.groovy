@@ -107,7 +107,7 @@ def gitParameterDefinitionObject (String name, String branchFilter, String sortM
         quickFilterEnabled)          // quickFilterEnabled
 }
 
-def stringParameterDefinitionObject (String name, String defaultValue, String description=''){
+def stringParameterDefinitionObject (String name, String defaultValue='', String description=''){
     return new StringParameterDefinition(name, defaultValue, description)
 }
 
